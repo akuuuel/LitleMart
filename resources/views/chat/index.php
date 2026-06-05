@@ -47,9 +47,9 @@
             </div>
 
             <!-- Active Chat UI (hidden until a chat is opened) -->
-            <div id="chat-active" class="hidden flex-col h-full overflow-hidden pointer-events-none">
-                <!-- Chat Header - FIXED/STICKY -->
-                <div class="sticky top-0 p-4 md:p-6 border-b border-gray-100 flex items-center justify-between bg-white/90 backdrop-blur-md z-30 flex-shrink-0 pointer-events-auto shadow-sm">
+            <div id="chat-active" class="hidden flex-col h-full overflow-hidden pointer-events-none bg-white relative">
+                <!-- Chat Header - TRULY FIXED FOR MOBILE WITH SHADOW -->
+                <div id="mobile-chat-header" class="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between bg-white z-50 flex-shrink-0 pointer-events-auto shadow-md md:relative md:shadow-sm">
                     <div class="flex items-center gap-3 md:gap-4">
                         <button onclick="closeChatMobile()" class="md:hidden w-10 h-10 flex items-center justify-center text-emerald-600 bg-emerald-50 active:scale-90 rounded-xl transition-all">
                             <i class="fa-solid fa-arrow-left"></i>
@@ -68,19 +68,19 @@
                     </div>
                 </div>
 
-                <!-- Messages Area -->
-                <div id="messages-container" class="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-8 bg-gray-50/30 no-scrollbar pointer-events-auto">
+                <!-- Messages Area - Added padding for pinned header -->
+                <div id="messages-container" class="flex-1 overflow-y-auto p-4 md:p-10 pt-[80px] md:pt-10 space-y-6 md:space-y-8 bg-gray-50/30 no-scrollbar pointer-events-auto">
                     <!-- Messages injected by Firebase JS -->
                 </div>
 
                 <!-- Input Area - FIXED TO BOTTOM -->
                 <div class="p-4 pb-8 md:pb-8 border-t border-gray-100 bg-white flex-shrink-0 pointer-events-auto z-30 shadow-[0_-10px_25px_rgba(0,0,0,0.02)]">
-                    <div class="max-w-4xl mx-auto flex items-center gap-3 md:gap-6 bg-gray-50 p-2 md:p-3 rounded-[1.8rem] md:rounded-[2.5rem] border border-gray-100 shadow-inner group focus-within:ring-2 focus-within:ring-emerald-500/10 focus-within:border-emerald-200 transition-all">
+                    <div class="max-w-4xl mx-auto flex items-center gap-3 md:gap-6 bg-gray-50 p-2 md:p-3 rounded-[1.8rem] md:rounded-[2.5rem] border border-gray-100 shadow-inner group transition-all">
                         <button class="w-10 h-10 text-gray-400 hover:text-emerald-600 transition-all hidden md:flex items-center justify-center">
                             <i class="fa-solid fa-paperclip"></i>
                         </button>
                         <input type="text" id="chat-input" placeholder="Tulis pesan..."
-                            class="flex-1 bg-transparent border-none focus:ring-0 text-base md:text-sm font-medium text-gray-700 placeholder-gray-400 pl-4 md:pl-0">
+                            class="flex-1 bg-transparent border-none focus:ring-0 focus:outline-none outline-none text-base md:text-sm font-medium text-gray-700 placeholder-gray-400 pl-4 md:pl-0">
                         <button id="send-button"
                             class="w-10 h-10 md:w-14 md:h-14 flex-shrink-0 bg-emerald-600 text-white rounded-2xl md:rounded-[1.5rem] shadow-lg shadow-emerald-900/20 flex items-center justify-center hover:scale-105 active:scale-90 transition-all">
                             <i class="fa-solid fa-paper-plane text-xs md:text-base"></i>
@@ -105,27 +105,39 @@
     /* Mobile Layout Fixes */
     @media (max-width: 767px) {
         footer { display: none !important; }
-        body { overflow: hidden; height: 100%; position: fixed; width: 100%; }
+        body { overflow: hidden; height: 100vh; width: 100%; position: relative; }
         #chat-main.opacity-100 { pointer-events: auto !important; }
         
-        /* Ensure input area sticks to bottom even with browser nav bars */
         #chat-active { 
             position: fixed;
-            top: 56px; /* Offset for navbar if fixed */
-            bottom: 0;
+            left: 0; right: 0; top: 0; 
+            height: 100%; 
+            z-index: 9999 !important; 
+            background: white;
+            flex-direction: column;
+            overflow: hidden;
+            margin: 0 !important;
+            padding: 0 !important;
+        } 
+        #mobile-chat-header { 
+            position: fixed;
+            top: 0; 
             left: 0;
             right: 0;
-            height: auto;
+            height: 70px;
+            z-index: 10001 !important; 
             background: white;
-            z-index: 50;
         }
-
-        /* Adjust top offset based on global navbar height */
-        <?php if (!isset($isDashboard) || !$isDashboard): ?>
-        #chat-active { top: 56px; } 
-        <?php else: ?>
-        #chat-active { top: 0; }
-        <?php endif; ?>
+        
+        #messages-container {
+            margin-top: 70px;
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        /* Hide main navbar when chat is active */
+        body.chat-open nav { display: none !important; }
     }
 </style>
 
@@ -136,6 +148,7 @@
 
     function openChatMobile() {
         if (window.innerWidth < 768) {
+            document.body.classList.add('chat-open'); // Hide global nav
             document.getElementById('chat-sidebar').classList.add('-translate-x-full');
             const main = document.getElementById('chat-main');
             main.classList.remove('pointer-events-none', 'opacity-0');
@@ -153,6 +166,7 @@
 
     function closeChatMobile() {
         if (window.innerWidth < 768) {
+            document.body.classList.remove('chat-open'); // Show global nav
             document.getElementById('chat-sidebar').classList.remove('-translate-x-full');
             const main = document.getElementById('chat-main');
             main.classList.add('pointer-events-none', 'opacity-0');
@@ -333,16 +347,32 @@
         }
     });
 
-    // Handle viewport height issues on mobile
-    window.addEventListener('resize', () => {
-        if (window.innerWidth < 768) {
-            const activePanel = document.getElementById('chat-active');
-            if (activePanel && !activePanel.classList.contains('hidden')) {
+    // Handle viewport resize for auto-scroll and window lock
+    if (window.visualViewport) {
+        const activePanel = document.getElementById('chat-active');
+        const header = document.getElementById('mobile-chat-header');
+        
+        window.visualViewport.addEventListener('resize', () => {
+            if (window.innerWidth < 768 && activePanel && !activePanel.classList.contains('hidden')) {
+                // Ensure header is pinned to the physical top of the visual viewport
+                header.style.top = window.visualViewport.offsetTop + 'px';
+                
                 const container = document.getElementById('messages-container');
                 if (container) container.scrollTop = container.scrollHeight;
             }
-        }
-    });
+        });
+
+        // Prevention for Android Chrome auto-scroll behavior
+        window.addEventListener('scroll', (e) => {
+            if (window.innerWidth < 768 && activePanel && !activePanel.classList.contains('hidden')) {
+                if (window.visualViewport.offsetTop > 0) {
+                     header.style.top = window.visualViewport.offsetTop + 'px';
+                } else {
+                     header.style.top = '0px';
+                }
+            }
+        }, { passive: true });
+    }
 </script>
 
 <?php include __DIR__ . '/../layouts/footer.php'; ?>

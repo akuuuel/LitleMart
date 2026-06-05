@@ -306,35 +306,78 @@
         // Catat waktu halaman dimuat untuk membedakan pesan baru vs lama
         const pageLoadTime = Date.now();
 
-        // Audio system with Mobile Autoplay bypass
-        const notifSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
-        notifSound.crossOrigin = "anonymous";
-        
-        // Unlock audio on first user interaction (standard mobile requirement)
+        // Web Audio API - Sintetis tone agar tidak mengganggu audio/musik lain
+        let audioCtx = null;
         let audioUnlocked = false;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            return audioCtx;
+        }
+
+        // Unlock AudioContext on first user gesture (required by browsers)
         function unlockAudio() {
             if (audioUnlocked) return;
-            notifSound.play().then(() => {
-                notifSound.pause();
-                notifSound.currentTime = 0;
-                audioUnlocked = true;
-                console.log("Audio unlocked for mobile.");
-            }).catch(e => console.warn("Audio unlock failed:", e));
+            try {
+                const ctx = getAudioContext();
+                // Resume suspended context (iOS requirement)
+                if (ctx.state === 'suspended') {
+                    ctx.resume().then(() => {
+                        audioUnlocked = true;
+                        console.log("Audio Context unlocked.");
+                    });
+                } else {
+                    audioUnlocked = true;
+                }
+            } catch(e) {
+                console.warn("AudioContext init failed:", e);
+            }
         }
-        document.addEventListener('click', unlockAudio, { once: true });
-        document.addEventListener('touchstart', unlockAudio, { once: true });
+        document.addEventListener('click', unlockAudio, { once: false });
+        document.addEventListener('touchstart', unlockAudio, { once: false });
+
+        // Play synthesized notification beep - does NOT interrupt other media
+        function playNotifBeep() {
+            try {
+                const ctx = getAudioContext();
+                if (ctx.state === 'suspended') ctx.resume();
+
+                // Create a soft double-beep
+                const playTone = (frequency, startTime, duration) => {
+                    const oscillator = ctx.createOscillator();
+                    const gainNode   = ctx.createGain();
+                    
+                    oscillator.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+                    
+                    oscillator.type      = 'sine';
+                    oscillator.frequency.setValueAtTime(frequency, startTime);
+                    
+                    // Fade in then fade out (smooth envelope)
+                    gainNode.gain.setValueAtTime(0, startTime);
+                    gainNode.gain.linearRampToValueAtTime(0.25, startTime + 0.02);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+                    
+                    oscillator.start(startTime);
+                    oscillator.stop(startTime + duration);
+                };
+
+                const now = ctx.currentTime;
+                playTone(880, now, 0.15);         // First beep
+                playTone(1100, now + 0.18, 0.12); // Second beep (higher pitch)
+            } catch(e) {
+                console.warn("Notification sound failed:", e);
+            }
+        }
 
         function showToastNotification(notif) {
             const urlParams = new URLSearchParams(window.location.search);
             const activePartnerId = urlParams.get('u');
             
-            // Always play sound for new message if audio is unlocked
-            if (audioUnlocked) {
-                notifSound.play().catch(e => console.warn("Sound play failed:", e));
-            } else {
-                // Fallback attempt
-                notifSound.play().catch(() => {});
-            }
+            // Play synthesized sound (won't interrupt music/video)
+            playNotifBeep();
 
             // Skip TOAST ONLY if we're already in that specific chat room
             if (notif.senderId !== 'system' && notif.senderId === activePartnerId) {

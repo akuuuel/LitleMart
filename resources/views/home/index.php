@@ -27,10 +27,6 @@
 
 <div class="max-w-[90rem] mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-8"
      x-data="{
-        pulling: false,
-        pullDistance: 0,
-        refreshing: false,
-        startY: 0,
         products: [],
         loadingMore: false,
         allLoaded: false,
@@ -70,46 +66,8 @@
             } finally {
                 this.loadingMore = false;
             }
-        },
-
-        handleStart(e) {
-            if (window.scrollY === 0) {
-                this.startY = e.touches[0].pageY;
-            }
-        },
-        handleMove(e) {
-            if (window.scrollY === 0 && e.touches[0].pageY > this.startY) {
-                const distance = e.touches[0].pageY - this.startY;
-                if (distance > 0) {
-                    this.pullDistance = Math.min(distance / 2.5, 80);
-                    this.pulling = true;
-                }
-            }
-        },
-        handleEnd() {
-            if (this.pullDistance > 60) {
-                this.refreshing = true;
-                window.location.reload();
-            } else {
-                this.pulling = false;
-                this.pullDistance = 0;
-            }
         }
-     }"
-     @touchstart="handleStart($event)"
-     @touchmove="handleMove($event)"
-     @touchend="handleEnd()">
-
-    <!-- Pull to Refresh Indicator -->
-    <div x-show="pulling || refreshing" 
-         class="fixed top-0 left-0 right-0 z-[110] flex justify-center pointer-events-none transition-all duration-200"
-         :style="`transform: translateY(${pullDistance}px); opacity: ${pullDistance / 60}`">
-        <div class="bg-white rounded-full p-2 shadow-xl border border-gray-100">
-            <svg class="w-6 h-6 text-primary animate-spin" :class="refreshing ? '' : 'animate-none'" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-            </svg>
-        </div>
-    </div>
+     }">
     <!-- Hero Section -->
     <div class="relative rounded-2xl md:rounded-[2rem] overflow-hidden bg-[#bedabe] p-5 md:p-12 mb-6 md:mb-16 shadow-2xl shadow-green-900/20 flex flex-col md:flex-row items-center gap-4 md:gap-8 border border-green-700/10"
          x-data="{ 
@@ -187,8 +145,8 @@
                 <i class="fa-solid fa-truck-fast"></i>
             </div>
             <div>
-                <h3 class="font-black md:font-bold text-gray-900 text-[10px] md:text-base leading-none">Free Ongkir</h3>
-                <p class="hidden md:block text-xs text-gray-500 mt-1">Gratis ongkir pesanan di atas Rp 50.000.</p>
+                <h3 class="font-black md:font-bold text-gray-900 text-[10px] md:text-base leading-none">Ongkir Murah</h3>
+                <p class="hidden md:block text-xs text-gray-500 mt-1">Tarif pengiriman kompetitif & hemat ke seluruh Indonesia.</p>
             </div>
         </div>
         <div class="bg-white border border-gray-100 rounded-xl md:rounded-2xl p-3 md:p-6 flex flex-col items-center justify-center text-center aspect-square md:aspect-auto md:flex-row md:items-start md:gap-4 md:text-left transition-all hover:bg-white shadow-lg shadow-slate-200/60 hover:shadow-2xl">

@@ -4,6 +4,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= $title ?? 'LitleMart Admin - Enterprise Control' ?></title>
+    <!-- PWA Settings -->
+    <link rel="manifest" href="<?= url('/manifest.json') ?>">
+    <meta name="theme-color" content="#056526">
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('<?= url('/sw.js') ?>');
+            });
+        }
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -41,9 +51,61 @@
         input, textarea, select {
             color: #0F172A !important;
         }
+
+        /* Loading Skeleton Styles */
+        .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        #page-skeleton {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #0F172A;
+            z-index: 9999;
+            display: flex;
+            padding: 40px;
+            gap: 20px;
+            transition: opacity 0.15s ease, visibility 0.15s ease;
+        }
+        .skeleton-fade-out { opacity: 0; visibility: hidden; }
     </style>
+    <script>
+        window.addEventListener('load', () => {
+            const skel = document.getElementById('page-skeleton');
+            if (skel) {
+                skel.classList.add('skeleton-fade-out');
+                setTimeout(() => skel.remove(), 150);
+            }
+        });
+        window.addEventListener('beforeunload', () => {
+            const skel = document.createElement('div');
+            skel.id = 'page-skeleton-nav';
+            skel.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:#0F172A;z-index:9999;opacity:0;transition:opacity 0.2s;';
+            document.body.appendChild(skel);
+            setTimeout(() => skel.style.opacity = '1', 10);
+        });
+    </script>
 </head>
 <body class="antialiased overflow-hidden">
+    <!-- Admin Skeleton -->
+    <div id="page-skeleton">
+        <div class="w-64 h-full skeleton rounded-r-3xl hidden lg:block"></div>
+        <div class="flex-1 flex flex-col gap-6">
+            <div class="h-16 w-full skeleton rounded-2xl"></div>
+            <div class="grid grid-cols-4 gap-6">
+                <div class="h-32 skeleton rounded-2xl"></div>
+                <div class="h-32 skeleton rounded-2xl"></div>
+                <div class="h-32 skeleton rounded-2xl"></div>
+                <div class="h-32 skeleton rounded-2xl"></div>
+            </div>
+            <div class="flex-1 w-full skeleton rounded-3xl"></div>
+        </div>
+    </div>
     <div class="flex h-screen bg-[#F8FAFC]" x-data="{ sidebarOpen: window.innerWidth > 1024 }">
         
         <!-- Sidebar Backdrop (mobile) -->
