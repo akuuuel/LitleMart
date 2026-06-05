@@ -1,0 +1,22 @@
+# Environments
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+/vendor/
+composer.phar
+
+# IDEs
+.idea/
+.vscode/
+
+# Assets & Uploads
+/public/uploads/*
+!/public/uploads/.gitkeep
+
+# Logs & OS
+error_log
+app/Logs/*
+Thumb.db
+.DS_Store
