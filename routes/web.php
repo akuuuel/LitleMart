@@ -9,6 +9,13 @@ $router->get('/register', [App\Controllers\AuthController::class, 'showRegister'
 $router->get('/vendor/register', [App\Controllers\AuthController::class, 'showRegister']);
 $router->post('/register', [App\Controllers\AuthController::class, 'register']);
 $router->post('/logout', [App\Controllers\AuthController::class, 'logout']);
+
+// Forgot Password
+$router->get('/forgot-password', [App\Controllers\AuthController::class, 'showForgotPassword']);
+$router->post('/forgot-password', [App\Controllers\AuthController::class, 'forgotPassword']);
+$router->get('/reset-password/{token}', [App\Controllers\AuthController::class, 'showResetPassword']);
+$router->post('/reset-password', [App\Controllers\AuthController::class, 'resetPassword']);
+
 $router->get('/auth/google', [App\Controllers\GoogleAuthController::class, 'googleRedirect']);
 $router->get('/auth/google/callback', [App\Controllers\GoogleAuthController::class, 'callback']);
 

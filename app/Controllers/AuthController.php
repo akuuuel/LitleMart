@@ -86,4 +86,83 @@ class AuthController extends Controller {
         Session::destroy();
         return $this->redirect('/login');
     }
+
+    public function showForgotPassword() {
+        return $this->view('auth.forgot-password');
+    }
+
+    public function forgotPassword(Request $request) {
+        $email = $request->input('email');
+        $userModel = new User();
+        $user = $userModel->findByEmail($email);
+
+        if ($user) {
+            $token = bin2hex(random_bytes(32));
+            
+            // Save token to database
+            $db = Database::getInstance()->getConnection();
+            $stmt = $db->prepare("UPDATE users SET reset_token = ? WHERE id = ?");
+            $stmt->execute([$token, $user['id']]);
+
+            $resetLink = url('/reset-password/' . $token);
+            
+            // Send real email
+            $mailSent = \App\Services\MailService::sendPasswordReset($user['email'], $user['name'], $resetLink);
+
+            $successMsg = "Instruksi pemulihan kata sandi telah dikirim ke alamat email Anda.";
+            if ($_ENV['APP_ENV'] === 'local') {
+                $successMsg .= " (Link Demo: <a href='$resetLink' class='underline font-bold'>Klik di sini</a>)";
+                if (!$mailSent) {
+                    $successMsg .= " <br><span class='text-xs text-red-500 font-normal'>Catatan: Gagal mengirim email nyata. Pastikan konfigurasi SMTP di .env sudah benar.</span>";
+                }
+            }
+            Session::setFlash('success', $successMsg);
+        } else {
+            Session::setFlash('success', 'Jika email tersebut terdaftar, instruksi pemulihan telah dikirim.');
+        }
+
+        return $this->redirect('/forgot-password');
+    }
+
+    public function showResetPassword(Request $request, $token) {
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM users WHERE reset_token = ?");
+        $stmt->execute([$token]);
+        $user = $stmt->fetch();
+
+        if (!$user) {
+            Session::setFlash('error', 'Token reset tidak valid atau sudah kedaluwarsa.');
+            return $this->redirect('/login');
+        }
+
+        return $this->view('auth.reset-password', ['token' => $token]);
+    }
+
+    public function resetPassword(Request $request) {
+        $token = $request->input('token');
+        $password = $request->input('password');
+        $confirmPassword = $request->input('confirm_password');
+
+        if ($password !== $confirmPassword) {
+            Session::setFlash('error', 'Konfirmasi kata sandi tidak cocok.');
+            return $this->redirect('/reset-password/' . $token);
+        }
+
+        $db = Database::getInstance()->getConnection();
+        $stmt = $db->prepare("SELECT * FROM users WHERE reset_token = ?");
+        $stmt->execute([$token]);
+        $user = $stmt->fetch();
+
+        if (!$user) {
+            Session::setFlash('error', 'Token reset tidak valid.');
+            return $this->redirect('/login');
+        }
+
+        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+        $stmt = $db->prepare("UPDATE users SET password = ?, reset_token = NULL WHERE id = ?");
+        $stmt->execute([$hashedPassword, $user['id']]);
+
+        Session::setFlash('success', 'Kata sandi Anda telah berhasil diperbarui. Silakan masuk.');
+        return $this->redirect('/login');
+    }
 }

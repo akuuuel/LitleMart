@@ -4,15 +4,36 @@
  * Generate a dynamic URL considering the base path (XAMPP subfolder support)
  */
 function url($path = '') {
-    $basePath = str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME']));
+    $path = ltrim($path, '/');
+    
+    // Detect the subfolder base path (e.g., /LitleMart/public)
+    $scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+    $basePath = str_replace('\\', '/', dirname($scriptName));
     $basePath = ($basePath === '/' ? '' : $basePath);
     
-    // If the path already starts with the basePath, don't add it again
-    if ($basePath !== '' && strpos($path, $basePath) === 0) {
-        return $path;
+    // Prevent duplication: if the path already starts with the base path, 
+    // we strip it so we can re-add it cleanly with the host.
+    $cleanBasePath = ltrim($basePath, '/');
+    if (!empty($cleanBasePath) && strpos($path, $cleanBasePath) === 0) {
+        $path = ltrim(substr($path, strlen($cleanBasePath)), '/');
     }
     
-    return $basePath . '/' . ltrim($path, '/');
+    // If we have a host, build a full absolute URL
+    if (isset($_SERVER['HTTP_HOST'])) {
+        $protocol = "http";
+        if (
+            (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ||
+            (isset($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+        ) {
+            $protocol = "https";
+        }
+        
+        return $protocol . "://" . $_SERVER['HTTP_HOST'] . $basePath . '/' . $path;
+    }
+    
+    // Fallback to APP_URL from .env or default for terminal/CLI
+    $baseUrl = $_ENV['APP_URL'] ?? 'http://localhost/LitleMart/public';
+    return rtrim($baseUrl, '/') . '/' . $path;
 }
 
 /**

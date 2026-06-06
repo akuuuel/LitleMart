@@ -123,7 +123,7 @@
                             <svg class="w-4 h-4 inline-block mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                             Kata Sandi
                         </label>
-                        <a href="#" class="text-sm font-bold text-[#056526] hover:underline">Lupa kata sandi?</a>
+                        <a href="<?= url('/forgot-password') ?>" class="text-sm font-bold text-[#056526] hover:underline">Lupa kata sandi?</a>
                     </div>
                     <div class="relative" x-data="{ showPass: false }">
                         <input name="password" :type="showPass ? 'text' : 'password'" required class="block w-full px-4 py-3 pr-12 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-black bg-white" placeholder="••••••••">

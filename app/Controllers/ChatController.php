@@ -7,7 +7,7 @@ use App\Core\Database;
 use App\Core\Session;
 
 class ChatController extends Controller {
-    public function index($request) {
+    public function index(\App\Core\Request $request) {
         $userId = Session::get('user_id');
         if (!$userId) {
             return $this->redirect('/login');
