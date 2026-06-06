@@ -295,6 +295,15 @@ $searchPlaceholder = $isDashboard ? "Cari pesanan, produk..." : "Cari produk, me
                 <?php endforeach; ?>
                 
                 <?php endif; ?>
+
+                <?php if (isset($_SESSION['roles']) && in_array('admin', $_SESSION['roles'])): ?>
+                <div class="mt-4 px-2 pt-4 border-t border-gray-100 pb-2 text-[10px] font-black text-emerald-600 uppercase tracking-widest">Akses Administrator</div>
+                <a href="<?= url('/admin/dashboard') ?>" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold text-gray-700 hover:bg-emerald-50 transition-colors">
+                    <svg class="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 14a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 14a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Dashboard Admin
+                </a>
+                <?php endif; ?>
+
             </nav>
             
             <?php if (isset($_SESSION['user_id'])): ?>
